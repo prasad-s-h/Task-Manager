@@ -5,6 +5,7 @@ const _ = require('lodash');
 const express = require('express');
 const auth = require('./../middleware/auth');
 const multer = require('multer');
+const sharp = require('sharp');
 
 const userRouter = new express.Router();
 const upload = multer({
@@ -119,7 +120,8 @@ userRouter.post('/users/logoutAll' , auth, async (req, res) => {
 });
 
 userRouter.post('/users/me/avatar', auth, upload.single('avatar'), async (req,res) => {
-    req.user.avatar = req.file.buffer;
+    const buffer = await sharp(req.file.buffer).resize({width:250, height:250}).png().toBuffer();
+    req.user.avatar = buffer;
     await req.user.save();
     const Notification = { Meassage: `Hi ${req.user.name}, Your avatar has been successfully uploaded`};
     res.send(Notification);
@@ -133,6 +135,22 @@ userRouter.delete('/users/me/avatar', auth, async (req,res) => {
     await req.user.save();
     const Notification = { Meassage: `Hi ${req.user.name}, Your avatar has been successfully removed`};
     res.send(Notification);
+});
+
+userRouter.get('/users/me/avatar/:id', async (req, res) => {
+    try {
+        const userId = req.params.id;
+        if(!ObjectId.isValid(userId)) throw new Error();
+        
+        const user = await Users.findById(userId);
+        if(!user.avatar) {
+            throw new Error();
+        }
+        res.set('Content-Type', 'image/png');
+        res.send(user.avatar);
+    } catch (error) {
+        res.status(404).send();
+    }
 });
 
 module.exports = {userRouter};
