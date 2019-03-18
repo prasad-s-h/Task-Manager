@@ -6,6 +6,7 @@ const express = require('express');
 const auth = require('./../middleware/auth');
 const multer = require('multer');
 const sharp = require('sharp');
+const {welcomeEmail, deleteMail} = require('./../email/account');
 
 const userRouter = new express.Router();
 const upload = multer({
@@ -32,6 +33,7 @@ userRouter.post('/users', async (req,res) => {
     try {
         const user = await userDoc.save();
         const token = await user.generateAuthToken();
+        welcomeEmail(user.name, user.email);
         const Notification = { Meassage: `Hi ${user.name}, your Account/Profile has been successfully created` };
         res.status(201).send({Notification, user, token});
     } catch (error) {
@@ -73,6 +75,7 @@ userRouter.patch('/users/me', auth, async (req,res) => {
 
 userRouter.delete('/users/me', auth, async (req,res) => {    
     try {
+        deleteMail(req.user.name, req.user.email);
         await req.user.remove();
         
         const Notification = { Meassage: `Hi ${req.user.name}, Your Account/Profile has been successfully deleted` };
