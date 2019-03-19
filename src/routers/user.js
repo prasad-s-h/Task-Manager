@@ -75,8 +75,8 @@ userRouter.patch('/users/me', auth, async (req,res) => {
 
 userRouter.delete('/users/me', auth, async (req,res) => {    
     try {
-        deleteMail(req.user.name, req.user.email);
         await req.user.remove();
+        deleteMail(req.user.name, req.user.email);
         
         const Notification = { Meassage: `Hi ${req.user.name}, Your Account/Profile has been successfully deleted` };
         return res.send({Notification});
@@ -89,7 +89,7 @@ userRouter.post('/users/login', async (req,res) => {
     try {
         const user = await Users.findByCredentials(req.body.email, req.body.password);
         const token = await user.generateAuthToken();
-        
+
         const Notification = { Meassage: `Hi ${user.name}, You have successfully logged in, check out the token for future communication`};
         res.send({Notification, token});
     } catch (error) {
