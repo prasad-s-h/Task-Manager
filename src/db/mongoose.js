@@ -2,7 +2,7 @@
 const mongoose = require('mongoose');
 
 mongoose.Promise = global.Promise;
-const uri = 'mongodb://localhost:27017/task-manager-api';
+const uri = process.env.MONGODB_URI;
 const options = {
     useNewUrlParser: true, 
     useCreateIndex: true

@@ -6,7 +6,7 @@ const express = require('express');
 const auth = require('./../middleware/auth');
 const multer = require('multer');
 const sharp = require('sharp');
-const {welcomeEmail, deleteMail} = require('./../email/account');
+const {welcomeEmail, deleteEmail} = require('./../email/account');
 
 const userRouter = new express.Router();
 const upload = multer({
@@ -76,8 +76,7 @@ userRouter.patch('/users/me', auth, async (req,res) => {
 userRouter.delete('/users/me', auth, async (req,res) => {    
     try {
         await req.user.remove();
-        deleteMail(req.user.name, req.user.email);
-        
+        deleteEmail(req.user.name, req.user.email);
         const Notification = { Meassage: `Hi ${req.user.name}, Your Account/Profile has been successfully deleted` };
         return res.send({Notification});
     } catch (error) {
