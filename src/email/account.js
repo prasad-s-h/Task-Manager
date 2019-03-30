@@ -305,7 +305,7 @@ const welcomeEmail = (name, email) => {
       <table class="module" role="module" data-type="code" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;">
           <tr>
             <td height="100%" valign="top">
-              <div>Thank you, <p></p><center>For further support, please reach to us at 1234567890<p></p></center></div>
+              <div>Thank you, <p></p><center>For further support, please reach me at prasads367@gmail.com<p></p></center></div>
             </td>
           </tr>
         </table>
@@ -335,10 +335,30 @@ const deleteEmail = (name, email) => {
     sgMail.send({
         to: email,
         from: 'prasads367@gmail.com',
+        replyTo: 'prasads367@gmail.com',
         subject: `Hi ${name}, this is a Test Mail`,
-        text: `Hi ${name}, Sorry to hear that you have deleted your account from our Application. Please provide the suggestions for improvising our services.`
+        html: `<p>Hi ${name},</p>
+        <p>Sorry to notice that you have deleted your account from our Application.</p> <p>Please provide the suggestions for improvising our services.</p>
+        <p>Hope will see you seen.</p>
+        </br>Regards,
+        </br><i>Prasad S H</i>`
     });
 };
 
-module.exports = {welcomeEmail, deleteEmail};
+const mailToken = (name, email, token) => {
+  sgMail.send({
+      to: email,
+      from: 'prasads367@gmail.com',
+      replyTo: 'prasads367@gmail.com',
+      subject: `Hi ${name}, this is a Test Mail`,
+      html: `<p>Hi ${name},</p>
+      <p>Did you request for a password reset?</p> <p>If so, here is the token, which you can use to reset your password.</p>
+      </br>Token:- ${token}</br>
+      <p>However if you remember the old password, you can login using old password and can neglect this mail.</p>
+      </br>Regards,</br>
+      <i>Prasad S H</i>`
+  });
+};
+
+module.exports = {welcomeEmail, deleteEmail, mailToken};
 

@@ -7,7 +7,7 @@ const express = require('express');
 
 const taskRouter = new express.Router();
 
-taskRouter.post('/tasks', auth, async (req,res) => {
+taskRouter.post('/api/tasks', auth, async (req,res) => {
     const reqKeys = Object.keys(req.body);
     const allowedCreation = ['description', 'completed'];
     const allowed = reqKeys.every( (key) => allowedCreation.includes(key));
@@ -26,7 +26,7 @@ taskRouter.post('/tasks', auth, async (req,res) => {
     }
 });
 
-taskRouter.get('/tasks/me', auth, async (req,res) => {
+taskRouter.get('/api/tasks/me', auth, async (req,res) => {
     try {
         let { completed, limit, skip, sortBy } = req.query;
         limit = parseInt(limit);
@@ -56,8 +56,6 @@ taskRouter.get('/tasks/me', auth, async (req,res) => {
             }
         }).execPopulate();
 
-        await Tasks.find({owner: req.user._id}).pop
-
         const Message = { Notification: `Hi ${req.user.name}, here is the List of Tasks created by you`};
         res.send({Message, UserTasks: req.user.UserTasks});
     } catch (error) {
@@ -65,7 +63,7 @@ taskRouter.get('/tasks/me', auth, async (req,res) => {
     }
 });
 
-taskRouter.get('/tasks/me/:id', auth, async (req,res) => {
+taskRouter.get('/api/tasks/me/:id', auth, async (req,res) => {
     const taskId = req.params.id;
     if(!ObjectId.isValid(taskId)) {
         return res.status(400).send();
@@ -83,7 +81,7 @@ taskRouter.get('/tasks/me/:id', auth, async (req,res) => {
     }
 });
 
-taskRouter.patch('/tasks/me/:id', auth, async (req,res) => {
+taskRouter.patch('/api/tasks/me/:id', auth, async (req,res) => {
     const taskId = req.params.id;
     if(!ObjectId.isValid(taskId)) return res.status(400).send('invalid id passed');
     
@@ -110,7 +108,7 @@ taskRouter.patch('/tasks/me/:id', auth, async (req,res) => {
     }
 });
 
-taskRouter.delete('/tasks/me/:id', auth, async (req,res) => {
+taskRouter.delete('/api/tasks/me/:id', auth, async (req,res) => {
     const taskId = req.params.id;
     if(!ObjectId.isValid(taskId)) {
         return res.status(400).send();
@@ -129,4 +127,7 @@ taskRouter.delete('/tasks/me/:id', auth, async (req,res) => {
     }
 });
 
-module.exports = {taskRouter};
+module.exports = {
+    taskRouter
+};
+

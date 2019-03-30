@@ -6,7 +6,7 @@ const express = require('express');
 const auth = require('./../middleware/auth');
 const multer = require('multer');
 const sharp = require('sharp');
-const {welcomeEmail, deleteEmail} = require('./../email/account');
+const {welcomeEmail, deleteEmail, mailToken} = require('./../email/account');
 
 const userRouter = new express.Router();
 const upload = multer({
@@ -22,7 +22,7 @@ const upload = multer({
     }
 });
 
-userRouter.post('/users', async (req,res) => {
+userRouter.post('/api/users', async (req,res) => {
     const reqKeys = Object.keys(req.body);
     const allowedCreation = ['name', 'email', 'password', 'age'];
     const allowed = reqKeys.every( (key) => allowedCreation.includes(key) );
@@ -41,7 +41,7 @@ userRouter.post('/users', async (req,res) => {
     }
 });
 
-userRouter.get('/users/me', auth, async (req,res) => {
+userRouter.get('/api/users/me', auth, async (req,res) => {
     try {
         const Notification = { Meassage: `Hi ${req.user.name}, Check out your Profile` };
         const userProfile = req.user;
@@ -51,7 +51,7 @@ userRouter.get('/users/me', auth, async (req,res) => {
     }
 });
 
-userRouter.patch('/users/me', auth, async (req,res) => { 
+userRouter.patch('/api/users/me', auth, async (req,res) => { 
     const requestKeys = Object.keys(req.body);
     const updatesAllowed = ['name', 'email', 'password'];
     const isValidOperation = requestKeys.every( (key) => updatesAllowed.includes(key) );
@@ -73,7 +73,7 @@ userRouter.patch('/users/me', auth, async (req,res) => {
     }
 });
 
-userRouter.delete('/users/me', auth, async (req,res) => {    
+userRouter.delete('/api/users/me', auth, async (req,res) => {    
     try {
         await req.user.remove();
         deleteEmail(req.user.name, req.user.email);
@@ -84,7 +84,7 @@ userRouter.delete('/users/me', auth, async (req,res) => {
     }
 });
 
-userRouter.post('/users/login', async (req,res) => {
+userRouter.post('/api/users/login', async (req,res) => {
     try {
         const user = await Users.findByCredentials(req.body.email, req.body.password);
         const token = await user.generateAuthToken();
@@ -96,7 +96,7 @@ userRouter.post('/users/login', async (req,res) => {
     }
 });
 
-userRouter.post('/users/logout', auth, async (req,res) => {
+userRouter.post('/api/users/logout', auth, async (req,res) => {
     try {
         req.user.tokens = req.user.tokens.filter( (elem) => elem.token !== req.token);
         await req.user.save();
@@ -109,7 +109,7 @@ userRouter.post('/users/logout', auth, async (req,res) => {
     }
 });
 
-userRouter.post('/users/logoutAll' , auth, async (req, res) => {
+userRouter.post('/api/users/logoutAll' , auth, async (req, res) => {
     try {
         req.user.tokens = [];
         await req.user.save();
@@ -121,7 +121,7 @@ userRouter.post('/users/logoutAll' , auth, async (req, res) => {
     }
 });
 
-userRouter.post('/users/me/avatar', auth, upload.single('avatar'), async (req,res) => {
+userRouter.post('/api/users/me/avatar', auth, upload.single('avatar'), async (req,res) => {
     const buffer = await sharp(req.file.buffer).resize({width:250, height:250}).png().toBuffer();
     req.user.avatar = buffer;
     await req.user.save();
@@ -131,7 +131,7 @@ userRouter.post('/users/me/avatar', auth, upload.single('avatar'), async (req,re
     if(error) res.status(400).send({Error: error.message});
 });
 
-userRouter.delete('/users/me/avatar', auth, async (req,res) => {
+userRouter.delete('/api/users/me/avatar', auth, async (req,res) => {
     // req.user.avatar = Buffer.alloc(0);
     req.user.avatar = undefined;
     await req.user.save();
@@ -139,7 +139,7 @@ userRouter.delete('/users/me/avatar', auth, async (req,res) => {
     res.send(Notification);
 });
 
-userRouter.get('/users/me/avatar/:id', async (req, res) => {
+userRouter.get('/api/users/me/avatar/:id', async (req, res) => {
     try {
         const userId = req.params.id;
         if(!ObjectId.isValid(userId)) throw new Error();
@@ -155,4 +155,26 @@ userRouter.get('/users/me/avatar/:id', async (req, res) => {
     }
 });
 
-module.exports = {userRouter};
+userRouter.post('/api/users/me/resetPassword', async (req, res) => {
+    try {
+        const obtainedKeys = Object.keys(req.body);
+        const allowedKeys = ["email"];
+        const result = obtainedKeys.every( (key) => allowedKeys.includes(key) );
+        if(!result) return res.status(400).send('please include only email property');
+
+        const user = await Users.findOne({email: req.body.email});
+        if(!user) return res.status(404).send('User not found with the assosciated Email');
+        
+        const token = await user.generateAuthToken();
+        mailToken(user.name, user.email, token);
+        const Notification = { Message: `Hi ${user.name}, Token has been mailed to your email account provided by you. Please Use that Token to reset the password`}
+        res.send(Notification);
+    } catch (error) {
+        res.status(400).send();
+    }
+});
+
+module.exports = {
+    userRouter
+};
+
